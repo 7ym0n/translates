@@ -29,7 +29,7 @@ it's can help me translate local language.
 In your program write:	
 ```scheme
 	(use-modules (translates translate))
-	(set-translate "csv" "./examples/locale" "zh" '(delimiter . #\;))
+	(set-translate "csv" "./examples/locale" "zh" '((delimiter . #\;)))
 ```
 
 TODO translate:
