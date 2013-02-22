@@ -14,16 +14,12 @@
 ;;  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-(define-module (translates translate))
+(define-module (translates translate)
+  #:use-module (translates utils))
 (module-export-all! (current-module))
 
 ;;;; translate configure infomation
 (define *translate-config* '())
-
-;;;; define error message level
-(define *error* "ERROR")
-(define *warn* "WARN")
-(define *note* "NOTE")
 
 ;;;; define support adapter
 (define *adapter-list* '(csv ini))
@@ -31,7 +27,7 @@
 
 (define (string-not-empty str)
   (if (and (string? str) 
-	   (not (equal? str "")))
+	   (not (string=? str "")))
       #t #f))
 
 ;;;; cons list to alist.	
@@ -54,20 +50,6 @@
   (set-alist 'content content (string-append "content must be a string,not empty or list. content value: " content))
   (set-alist 'locale locale (string-append "locale must be a string,not empty or list. locale value: " locale))
   (set! *translate-config* (cons (cons 'options options) *translate-config* )))
-
-
-;;;; each list,get equal str data
-(define (match-list-data lists str)
-  (if (equal? lists '())
-      #f
-      (let loop ((alist lists))
-	(cond ((equal? alist '())
-	       '()) 
-	      ((equal? (caar alist) str)
-	       (cadar alist))
-	      (else
-	       (loop (cdr alist)))))))		
-
 
 ;;;; TODO
 (define (get-translate-conf key-word)
@@ -104,8 +86,8 @@
 ;;;;TODO
 (define (get-data keyword module-key locale)
   (cond ((find-adapter module-key) => (lambda (mod)
-				     (apply (module-ref mod 'get-translate-data) 
-					    '(keyword (get-adapter) (get-content) locale (get-options)))))
+					(apply (module-ref mod 'get-translate-data) 
+					       (list keyword (get-content) locale (get-options)))))
         (else
 	 (custom-error-rating *error* "unknow module"))))
 
@@ -120,13 +102,7 @@
 
 ;;;; TODO
 (define* (translate keyword #:optional (locale ""))
-  (let ((new-key "") (local ""))
-    (cond ((symbol? keyword)
-	   (set! new-key (symbol->string keyword)))
-	  ((string? keyword)
-	   (set! new-key keyword))
-	  (else
-	   (custom-error-rating *error* "wrong key of arguments type")))
+  (let ((new-key (string-or-symbol keyword)) (local ""))
     (if (string-not-empty locale)
 	(set! local locale))
     (get-translate new-key local)))
@@ -135,14 +111,4 @@
 (define (get-env-locale)
   (setlocale LC_ALL ""))
 
-;;;; Display error infomation
-(define* (custom-error-rating rate #:optional (message ""))
-  (cond ((equal? *error* rate)
-	 (error (string-append *error* ": " message)))
-	((equal? *warn* rate)
-	 (format (current-error-port) (string-append *warn* ": " message)))
-	((equal? *note* rate)
-	 (format (current-error-port) (string-append *note* ": " message)))
-	(else
-	 (error "Unknow error!"))
-	))
+

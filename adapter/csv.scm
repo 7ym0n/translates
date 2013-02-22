@@ -15,7 +15,13 @@
 
 
 (define-module (translates adapter csv)
+  #:use-module (translates utils)
+  #:use-module (ice-9 rdelim)
   #:export (get-translate-data))
+
+;;; define delimiter
+(define *delimiter* #\;)
+
 ;;(module-export-all! (current-module))
 
 ;;; read csv file.
@@ -33,16 +39,60 @@
 ;;;		......
 (define *global-translate-csv* '())
 
+;;; Test read one csv file
+;;; as example for:
+;;;		  file data as "name";"nala"\n"name";"b.tag"\n
+;;;       	  (define handle (open-file "test.csv"))
+;;;		  (get-each-file handle ";") =>    '(("name" "nala") ("name" "b.tag"))
+(define read-language-file
+  (lambda (handle)
+    (let ((lst '()))
+      (do ((line-data (read-line handle) (read-line handle)))
+	  ((eof-object? line-data))
+	(set! lst (cons (string-split line-data *delimiter*) lst)))
+      lst)))
+
  ;;;; i18n get local infomation
  ;;;; For example: (get-translate-csv 'welcome) => Welcome using artanis
 (define (get-translate-csv str)
-  '(match-list-data *global-translate-csv* str))
+  (get-translate-value *global-translate-csv* str))
+
+;;; TODO
+;;; (string-trim-both s char-set:punctuation)
+(define (get-full-data content local)
+  (let* ((paths (append (string-split content #\/) (list local)))
+	 (files (get-language-files paths ".csv"))
+	 (data '()))
+    (if (not (null? files))
+	(for-each (lambda (filename)
+		    (if (not (null? filename))
+			(set! data 
+			      (append data 
+				      (call-with-input-file 
+					  (language-file (append paths (list filename))) 
+					read-language-file)))))
+		  
+		  files)
+	data)
+    data))
+
+;;;; TODO
+(define (read-options options key)
+   (if (equal? options '())
+      key
+      (let loop ((alist options))
+	(cond ((equal? alist '())
+	       key) 
+	      ((equal? (caar alist) key)
+	       (cdar alist))
+	      (else
+	       (loop (cdr alist)))))))
 
 
-(define (get-translate-data keyword adapter content local option)
-  '())
 
-
-(define (add-translate-data local)
-  '())
-
+;;;; TODO
+(define (get-translate-data keyword content local options)
+  (set! *delimiter* (read-options options 'delimiter))
+  (set! *global-translate-csv* 
+	(get-full-data content local))
+  (get-translate-csv keyword))
