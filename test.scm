@@ -1,5 +1,5 @@
 #! /usr/local/bin/guile \
--e main -L ./
+-e main -L ../
 !#
 
 (use-modules (translates translate)(translates utils)(ice-9 rdelim))
@@ -26,6 +26,8 @@
     (display (get-options))
     (newline)
     (display (translate 'hello))
+    (newline)
+    (display (translate 'hello "en"))
     ;;(display (call-with-input-file "./translates/examples/locale/zh/test.csv" get-each-new-file))
     ;;(display (string-or-symbol "aa"))
     ;;(close f)
